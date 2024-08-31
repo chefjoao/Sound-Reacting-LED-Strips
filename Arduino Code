@@ -1,0 +1,64 @@
+#include <Adafruit_NeoPixel.h>
+
+//initializing the variables
+#define LED_PIN    6 // pin that connects the strip to the Arduino
+#define NUMPIXELS 30//number of NeoPixels on the strip
+#define ENVELOPE_PIN A0           // Connect sound detector to this pin
+#define IRSENSOR 7
+#define SENSITIVITY 300           // Ranges from 0 to 1023
+#define MAX_BRIGHTNESS 200        // Ranges from 0 to 255
+#define PIN_LED_OUT 13
+#define MINVAL 60
+int R=50;
+int G = 50;
+int B = 50;
+#define R_CHANGE 40
+
+int counter = 0;
+boolean nearBy;
+// Declare our NeoPixel strip object:
+Adafruit_NeoPixel strip(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+int DELAYVAL = 10;//delay of each pixel to fade. Can be set to different values for quicker or slower response
+
+boolean checkHand(int value) {//check if a hand is present on top of the IR sensor for activation
+  if (value == 0) {
+    return true;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(ENVELOPE_PIN, INPUT);
+  pinMode (IRSENSOR, INPUT); // sensor pin INPUT
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+}
+
+
+void loop() {
+//Check the envelope input from the sound sensor
+  int value;
+  value = analogRead(ENVELOPE_PIN);
+  int statusReading = digitalRead (IRSENSOR);
+
+  if (counter == 0) {
+    if (statusReading == 0) {//there is a hand
+      ++counter;
+      Serial.println("YES");
+    }
+  }
+  else {
+    strip.clear(); // Set all pixel colors to 'off'
+
+    for(int i=0; i<30; i++) { // For each pixel...
+      byte val = map(value, 0, SENSITIVITY+1, 0, MAX_BRIGHTNESS);
+      strip.setPixelColor(i, strip.Color(R+val, G+val, B+val));
+      strip.show();   // Send the updated pixel colors to the hardware.
+
+      delay(DELAYVAL); // Pause before next pass through loop
+      ++counter;
+    }
+  delay(250);
+    }
+}
